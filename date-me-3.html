@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>An application, of sorts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#f4efe6; --bg:#221b22; --bg-soft:#2b232b;
+    --wine:#b3495f; --gold:#cba35c; --sage:#8a9a80;
+    --muted:#c9bfc4; --line:rgba(244,239,230,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{ background:var(--bg); color:var(--ink); font-family:'Work Sans', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:520px; margin:0 auto; min-height:100vh; padding:28px 24px 60px; }
+  h1,h2,h3{ font-family:'Fraunces', serif; font-weight:500; line-height:1.15; margin:0; }
+  .screen{ display:none; }
+  .screen.active{ display:block; }
+  #screen-intro .eyebrow{ color:var(--gold); font-size:15px; margin-bottom:14px; }
+  #screen-intro h1{ font-size:34px; margin-bottom:18px; }
+  #screen-intro p{ color:var(--muted); font-size:16px; line-height:1.6; margin-bottom:24px; max-width:38ch; }
+  .section-title{ font-family:'Fraunces', serif; color:var(--gold); font-size:15px; margin:0 0 4px; }
+  .section{ margin-bottom:8px; padding-top:28px; border-top:1px solid var(--line); }
+  .section:first-child{ border-top:none; padding-top:0; }
+  .field{ margin-bottom:22px; }
+  label.q{ display:block; font-size:16px; margin-bottom:8px; line-height:1.4; }
+  .hint{ color:var(--muted); font-size:13px; margin-top:-4px; margin-bottom:8px; }
+  input[type=text], input[type=number], input[type=date], input[type=time], textarea{
+    width:100%; background:transparent; border:none; border-bottom:1px solid var(--line);
+    color:var(--ink); font-family:'Work Sans', sans-serif; font-size:16px; padding:10px 2px; outline:none;
+  }
+  input:focus, textarea:focus, select:focus{ border-bottom-color:var(--wine); }
+  textarea{ resize:vertical; min-height:70px; line-height:1.5; }
+  select{
+    width:100%; background:var(--bg-soft); border:1px solid var(--line); color:var(--ink);
+    font-family:'Work Sans', sans-serif; font-size:15px; padding:12px; border-radius:8px; outline:none;
+  }
+  .slider-labels{ display:flex; justify-content:space-between; color:var(--muted); font-size:13px; margin-top:4px;}
+  input[type=range]{ width:100%; accent-color:var(--wine); }
+  .photo-drop{
+    display:inline-block; border:1px dashed var(--line); border-radius:10px; padding:16px 18px;
+    text-align:center; color:var(--muted); font-size:14px; cursor:pointer;
+  }
+  .photo-preview{ max-width:100px; border-radius:8px; margin-top:12px; display:block; }
+  .field-error{ color:var(--wine); font-size:13px; margin-top:6px; display:none; }
+  .field-error.show{ display:block; }
+  .submit-row{ margin-top:32px; }
+  .btn{ font-family:'Work Sans', sans-serif; font-weight:600; font-size:15px; border:none; border-radius:999px; padding:14px 26px; cursor:pointer; }
+  .btn-primary{ background:var(--wine); color:var(--ink); width:100%; }
+  .btn-primary:disabled{ opacity:.35; cursor:not-allowed; }
+  .btn-ghost{ background:none; color:var(--muted); padding:14px 8px; }
+  .form-error{ color:var(--wine); font-size:14px; margin-top:14px; text-align:center; display:none; }
+  .form-error.show{ display:block; }
+  #screen-result h2{ font-size:28px; margin-bottom:16px; }
+  #screen-result p{ color:var(--muted); font-size:16px; line-height:1.65; margin-bottom:16px; max-width:40ch; }
+  .owner-photo{ width:96px; height:96px; border-radius:50%; object-fit:cover; margin-bottom:16px; }
+  .owner-photo-fallback{
+    width:96px; height:96px; border-radius:50%; background:linear-gradient(135deg, var(--wine), var(--gold));
+    display:flex; align-items:center; justify-content:center; font-family:'Fraunces', serif; font-size:32px; margin-bottom:16px;
+  }
+  .divider{ height:1px; background:var(--line); margin:24px 0; }
+  .number-line{ font-family:'Fraunces', serif; font-size:22px; color:var(--gold); margin:4px 0 24px; }
+  .plan-form .field{ margin-bottom:16px; }
+  a.wa-btn, button.wa-btn{
+    display:inline-block; background:var(--sage); color:var(--bg); text-decoration:none; font-weight:600;
+    padding:14px 26px; border-radius:999px; margin-top:6px; border:none; cursor:pointer; font-size:15px; font-family:'Work Sans', sans-serif;
+  }
+  .footer-tap{ text-align:center; color:var(--line); font-size:12px; margin-top:32px; cursor:default; user-select:none; }
+  .admin-login{ max-width:280px; margin:0 auto; }
+  .admin-login input{ margin-bottom:16px; }
+  .owner-photo-section{ max-width:320px; margin:0 auto 32px; padding-bottom:24px; border-bottom:1px solid var(--line); }
+  .saved-msg{ color:var(--sage); font-size:13px; margin-top:8px; display:none; }
+  .submission{ border-bottom:1px solid var(--line); padding:16px 0; font-size:14px; }
+  .submission .row{ display:flex; justify-content:space-between; margin-bottom:6px; color:var(--muted); }
+  .badge{ font-size:12px; padding:3px 10px; border-radius:999px; font-weight:600; }
+  .badge.pass{ background:rgba(138,154,128,.25); color:var(--sage); }
+  .badge.fail{ background:rgba(179,73,95,.25); color:var(--wine); }
+  .submission dl{ margin:10px 0 0; }
+  .submission dt{ color:var(--gold); font-size:12px; margin-top:8px; }
+  .submission dd{ margin:2px 0 0; color:var(--ink); }
+  .submission img{ max-width:80px; border-radius:6px; margin-top:6px; }
+  #adminList{ max-height:70vh; overflow:auto; margin-top:20px; }
+  .admin-empty{ color:var(--muted); text-align:center; padding:40px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="screen active" id="screen-intro">
+    <div class="eyebrow" id="introEyebrow"></div>
+    <h1 id="introHeadline"></h1>
+    <p id="introBody"></p>
+    <button class="btn btn-primary" id="startBtn">Answer a few questions</button>
+  </div>
+
+  <div class="screen" id="screen-form">
+    <h2 style="font-size:24px; margin-bottom:24px;">Tell me about you</h2>
+    <form id="theForm">
+      <div class="section">
+        <div class="field">
+          <label class="q">What's your name?</label>
+          <input type="text" id="f-name">
+          <div class="field-error" data-for="name">Please enter your name.</div>
+        </div>
+        <div class="field">
+          <label class="q">How old are you?</label>
+          <input type="number" id="f-age" min="16" max="100">
+          <div class="field-error" data-for="age">Enter a valid age.</div>
+          <div class="field-error" id="ageDisqualify" style="color:var(--wine);">This isn't within the age range I'm looking for — you won't be able to continue, but thank you for your honesty.</div>
+        </div>
+        <div class="field">
+          <label class="q">How tall are you?</label>
+          <div class="hint">In centimeters — just curious, not a dealbreaker</div>
+          <input type="number" id="f-heightCm" min="120" max="230">
+          <div class="field-error" data-for="heightCm">Enter a valid height in cm.</div>
+        </div>
+        <div class="field">
+          <label class="q">Where do you live right now?</label>
+          <input type="text" id="f-city">
+          <div class="field-error" data-for="city">Please enter a city.</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="field">
+          <label class="q">What do you do for work?</label>
+          <input type="text" id="f-career">
+          <div class="field-error" data-for="career">Please answer this one.</div>
+        </div>
+        <div class="field">
+          <label class="q">Highest level of education completed</label>
+          <select id="f-educationLevel">
+            <option value="">Choose one</option>
+            <option value="highschool">High school</option>
+            <option value="bachelor">Bachelor's degree</option>
+            <option value="master">Master's degree</option>
+            <option value="doctorate">Doctorate</option>
+          </select>
+          <div class="field-error" data-for="educationLevel">Please choose one.</div>
+          <div class="field-error" id="eduDisqualify" style="color:var(--wine);">I'm looking for a bachelor's degree or higher — you won't be able to continue, but thank you for your honesty.</div>
+        </div>
+        <div class="field">
+          <label class="q">What did you study?</label>
+          <input type="text" id="f-educationDetail">
+          <div class="field-error" data-for="educationDetail">Please answer this one.</div>
+        </div>
+        <div class="field">
+          <label class="q">Where does your family live?</label>
+          <input type="text" id="f-familyLocation">
+          <div class="field-error" data-for="familyLocation">Please answer this one.</div>
+        </div>
+        <div class="field">
+          <label class="q">Tell me a little about the household you grew up in.</label>
+          <textarea id="f-household"></textarea>
+          <div class="field-error" data-for="household">Please answer this one.</div>
+        </div>
+        <div class="field">
+          <label class="q">Have you ever been married before?</label>
+          <select id="f-previouslyMarried">
+            <option value="">Choose one</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+          <div class="field-error" data-for="previouslyMarried">Please choose one.</div>
+        </div>
+        <div class="field">
+          <label class="q">When do you see yourself getting married?</label>
+          <select id="f-marriageTimeline">
+            <option value="">Choose one</option>
+            <option value="within1">Within the next year</option>
+            <option value="1to2">In 1–2 years</option>
+            <option value="3to5">In 3–5 years</option>
+            <option value="norush">I'm not in a rush</option>
+          </select>
+          <div class="field-error" data-for="marriageTimeline">Please choose one.</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="field">
+          <label class="q">Describe the kind of person you want to marry.</label>
+          <textarea id="f-lookingFor"></textarea>
+          <div class="field-error" data-for="lookingFor">Please answer this one.</div>
+        </div>
+        <div class="field">
+          <label class="q">How religious are you?</label>
+          <input type="range" id="f-religiosity" min="1" max="5" value="3">
+          <div class="slider-labels"><span>Not religious</span><span>Very religious</span></div>
+        </div>
+        <div class="field">
+          <label class="q">What do you see yourself doing in the next five years?</label>
+          <textarea id="f-vision"></textarea>
+          <div class="field-error" data-for="vision">Please answer this one.</div>
+        </div>
+        <div class="field">
+          <label class="q">Why do you think you'd be a good match for me?</label>
+          <textarea id="f-eligible"></textarea>
+          <div class="field-error" data-for="eligible">Please answer this one.</div>
+        </div>
+        <div class="field">
+          <label class="q">Why are you attracted to me?</label>
+          <textarea id="f-attracted"></textarea>
+          <div class="field-error" data-for="attracted">Please answer this one.</div>
+        </div>
+        <div class="field">
+          <label class="q">Want to add a photo?</label>
+          <div class="hint">Optional</div>
+          <label class="photo-drop">Tap to upload
+            <input type="file" accept="image/*" id="f-photo" style="display:none;">
+          </label>
+          <img class="photo-preview" id="photoPreview" style="display:none;">
+        </div>
+      </div>
+
+      <div class="submit-row">
+        <button type="button" class="btn btn-primary" id="submitBtn">Submit</button>
+        <div class="form-error" id="formError">A few required questions still need answers — scroll up to check the highlighted ones.</div>
+      </div>
+    </form>
+  </div>
+
+  <div class="screen" id="screen-saving">
+    <p style="text-align:center; color:var(--muted); margin-top:80px;">One moment…</p>
+  </div>
+
+  <div class="screen" id="screen-result">
+    <div id="resultContent"></div>
+  </div>
+
+  <div class="footer-tap" id="footerTap">·</div>
+
+  <div class="screen" id="screen-admin">
+    <h2 style="margin-bottom:20px;">Responses</h2>
+    <div class="admin-login" id="adminLogin">
+      <input type="password" id="adminPass" placeholder="Passcode">
+      <button class="btn btn-primary" id="adminLoginBtn">View</button>
+      <div class="form-error show" id="adminError" style="display:none;"></div>
+    </div>
+
+    <div class="owner-photo-section" id="ownerPhotoSection" style="display:none;">
+      <p class="hint" style="margin-bottom:10px;">Your photo — shown to anyone who matches</p>
+      <img class="photo-preview" id="ownerPhotoPreview" style="display:none;">
+      <label class="photo-drop">Tap to upload
+        <input type="file" accept="image/*" id="ownerPhotoInput" style="display:none;">
+      </label>
+      <div>
+        <button class="btn btn-primary" id="saveOwnerPhotoBtn" style="width:auto; padding:12px 20px; margin-top:12px;">Save photo</button>
+        <div class="saved-msg" id="ownerPhotoSaved">Saved — this will show automatically from now on.</div>
+      </div>
+    </div>
+
+    <div id="adminList" style="display:none;"></div>
+    <button class="btn btn-ghost" id="adminCloseBtn" style="margin-top:20px;">Close</button>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIG — this is the only section you should need to edit.
+   Your photo doesn't need to go here — upload it from the admin panel
+   instead (tap the small dot at the bottom of the page 5 times).
+   ===================================================================== */
+const CONFIG = {
+  ownerName: "Rithwan",                   // edit if you'd like your full name shown
+  ownerTagline: "before you keep scrolling",
+  introBody: "I'd rather learn a bit about you first. A few honest questions — then, if it's a fit, I'll share more, including how to reach me and a way to plan a time to meet.",
+  ownerBio: "Hi, I'm Rithwan. I'm 21, currently in college finishing my bachelor's degree. This page is my way of getting to know you a little before we do.",
+  ownerPhoto: "",                         // fallback only — the admin-panel upload takes priority if you've saved one there
+  lookingForText: "I'm looking for someone who knows who they are, is willing to grow together with me, leads with confidence, and takes their faith seriously.",
+  whatsappNumber: "254703606989",         // edit if this changes: full international number, digits only, no + or spaces
+  adminPasscode: "changeme",              // EDIT ME before you share this link
+
+  // Only these gates decide the automatic match. Everything else the
+  // person answers (height, career, marriage timeline, vision, etc.)
+  // is just for YOU to read yourself in the admin panel.
+  criteria: {
+    age: { min: 22, max: 29 },            // outside this range, they can't continue
+    education: { minLevel: "bachelor" },  // high school alone disqualifies; bachelor's or higher required
+    religiosity: { min: 4 }               // 4 or 5 out of 5 required
+  }
+};
+
+/* ===================================================================== */
+
+const EDU_RANK = { highschool: 1, bachelor: 2, master: 3, doctorate: 4 };
+const el = (id) => document.getElementById(id);
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); el(id).classList.add('active'); }
+
+el('introEyebrow').textContent = CONFIG.ownerTagline;
+el('introHeadline').textContent = CONFIG.ownerName;
+el('introBody').textContent = CONFIG.introBody;
+el('startBtn').addEventListener('click', () => showScreen('screen-form'));
+
+function resizeImageFile(file, maxW){
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+let photoThumb = null;
+el('f-photo').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  photoThumb = await resizeImageFile(file, 200);
+  el('photoPreview').src = photoThumb;
+  el('photoPreview').style.display = 'block';
+});
+
+function collectAnswers(){
+  return {
+    name: el('f-name').value.trim(),
+    age: el('f-age').value === '' ? null : Number(el('f-age').value),
+    heightCm: el('f-heightCm').value === '' ? null : Number(el('f-heightCm').value),
+    city: el('f-city').value.trim(),
+    career: el('f-career').value.trim(),
+    educationLevel: el('f-educationLevel').value,
+    educationDetail: el('f-educationDetail').value.trim(),
+    familyLocation: el('f-familyLocation').value.trim(),
+    household: el('f-household').value.trim(),
+    previouslyMarried: el('f-previouslyMarried').value,
+    marriageTimeline: el('f-marriageTimeline').value,
+    lookingFor: el('f-lookingFor').value.trim(),
+    religiosity: Number(el('f-religiosity').value),
+    vision: el('f-vision').value.trim(),
+    eligible: el('f-eligible').value.trim(),
+    attracted: el('f-attracted').value.trim(),
+    photoThumb: photoThumb
+  };
+}
+
+function validate(a){
+  const errors = {};
+  if(!a.name) errors.name = true;
+  if(a.age == null || a.age < 16 || a.age > 100) errors.age = true;
+  if(a.heightCm == null || a.heightCm < 120 || a.heightCm > 230) errors.heightCm = true;
+  if(!a.city) errors.city = true;
+  if(!a.career) errors.career = true;
+  if(!a.educationLevel) errors.educationLevel = true;
+  if(!a.educationDetail) errors.educationDetail = true;
+  if(!a.familyLocation) errors.familyLocation = true;
+  if(!a.household) errors.household = true;
+  if(!a.previouslyMarried) errors.previouslyMarried = true;
+  if(!a.marriageTimeline) errors.marriageTimeline = true;
+  if(!a.lookingFor) errors.lookingFor = true;
+  if(!a.vision) errors.vision = true;
+  if(!a.eligible) errors.eligible = true;
+  if(!a.attracted) errors.attracted = true;
+  return errors;
+}
+
+function paintErrors(errors){
+  document.querySelectorAll('.field-error').forEach(n => n.classList.remove('show'));
+  Object.keys(errors).forEach(key => {
+    const n = document.querySelector(`.field-error[data-for="${key}"]`);
+    if(n) n.classList.add('show');
+  });
+  el('formError').classList.toggle('show', Object.keys(errors).length > 0);
+}
+
+function scoreAnswers(a){
+  const c = CONFIG.criteria;
+  const agePass = a.age != null && a.age >= c.age.min && a.age <= c.age.max;
+  const eduPass = EDU_RANK[a.educationLevel] >= EDU_RANK[c.education.minLevel];
+  const religPass = a.religiosity >= c.religiosity.min;
+  return { pass: agePass && eduPass && religPass, agePass, eduPass, religPass };
+}
+
+// ---- live disqualifiers: age and education lock the form immediately,
+//      instead of waiting until the end. ----
+let ageDisqualified = false;
+let eduDisqualified = false;
+
+function updateSubmitLock(){
+  el('submitBtn').disabled = ageDisqualified || eduDisqualified;
+}
+
+el('f-age').addEventListener('input', () => {
+  const val = el('f-age').value === '' ? null : Number(el('f-age').value);
+  const c = CONFIG.criteria.age;
+  ageDisqualified = val != null && (val < c.min || val > c.max);
+  el('ageDisqualify').classList.toggle('show', ageDisqualified);
+  updateSubmitLock();
+});
+
+el('f-educationLevel').addEventListener('change', () => {
+  eduDisqualified = el('f-educationLevel').value === 'highschool';
+  el('eduDisqualify').classList.toggle('show', eduDisqualified);
+  updateSubmitLock();
+});
+
+el('submitBtn').addEventListener('click', async () => {
+  if(ageDisqualified || eduDisqualified) return;
+  const a = collectAnswers();
+  const errors = validate(a);
+  paintErrors(errors);
+  if(Object.keys(errors).length > 0) return;
+
+  showScreen('screen-saving');
+  const result = scoreAnswers(a);
+  const record = { ...a, submittedAt: new Date().toISOString(), pass: result.pass, agePass: result.agePass, eduPass: result.eduPass, religPass: result.religPass };
+  try{
+    const key = 'submissions:' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
+    await window.storage.set(key, JSON.stringify(record), true);
+  }catch(err){
+    console.error('Could not save submission', err);
+  }
+
+  let ownerPhoto = CONFIG.ownerPhoto;
+  try{
+    const r = await window.storage.get('owner-photo', true);
+    if(r && r.value) ownerPhoto = r.value;
+  }catch(e){ /* none saved yet */ }
+
+  renderResult(result, a, ownerPhoto);
+  showScreen('screen-result');
+});
+
+function renderResult(result, a, ownerPhoto){
+  const c = el('resultContent');
+  if(result.pass){
+    const photoHtml = ownerPhoto
+      ? `<img class="owner-photo" src="${ownerPhoto}" alt="${CONFIG.ownerName}">`
+      : `<div class="owner-photo-fallback">${CONFIG.ownerName.charAt(0)}</div>`;
+    c.innerHTML = `
+      ${photoHtml}
+      <h2>It's a match — hi, I'm ${CONFIG.ownerName}.</h2>
+      <p>${CONFIG.ownerBio}</p>
+      <div class="divider"></div>
+      <p><strong style="color:var(--gold); font-weight:600;">Who I'm looking for:</strong><br>${CONFIG.lookingForText}</p>
+      <div class="divider"></div>
+      <p style="margin-bottom:6px;">Here's my number:</p>
+      <div class="number-line">+${CONFIG.whatsappNumber}</div>
+      <p style="margin-bottom:10px;">Want to put a time on the calendar? Propose one below and I'll get it on WhatsApp.</p>
+      <div class="plan-form">
+        <div class="field">
+          <label class="q" style="font-size:14px;">Date</label>
+          <input type="date" id="p-date">
+        </div>
+        <div class="field">
+          <label class="q" style="font-size:14px;">Time</label>
+          <input type="time" id="p-time">
+        </div>
+        <div class="field">
+          <label class="q" style="font-size:14px;">A note (optional)</label>
+          <textarea id="p-note" placeholder="Somewhere in mind? Say hi here."></textarea>
+        </div>
+        <button class="wa-btn" id="planBtn">Send via WhatsApp</button>
+      </div>
+    `;
+    el('planBtn').addEventListener('click', () => {
+      const date = el('p-date').value;
+      const time = el('p-time').value;
+      const note = el('p-note').value.trim();
+      const timelineLabels = { within1:"Within the next year", "1to2":"In 1–2 years", "3to5":"In 3–5 years", norush:"Not in a rush" };
+      const eduLabels = { highschool:"High school", bachelor:"Bachelor's degree", master:"Master's degree", doctorate:"Doctorate" };
+
+      let msg = `Hi, I'm ${a.name}! I answered your questions:\n\n`;
+      msg += `Age: ${a.age}\n`;
+      msg += `Height: ${a.heightCm} cm\n`;
+      msg += `Lives in: ${a.city}\n`;
+      msg += `Career: ${a.career}\n`;
+      msg += `Education: ${eduLabels[a.educationLevel] || a.educationLevel} — ${a.educationDetail}\n`;
+      msg += `Family location: ${a.familyLocation}\n`;
+      msg += `Household: ${a.household}\n`;
+      msg += `Previously married: ${a.previouslyMarried === 'yes' ? 'Yes' : 'No'}\n`;
+      msg += `Marriage timeline: ${timelineLabels[a.marriageTimeline] || a.marriageTimeline}\n`;
+      msg += `Who I want to marry: ${a.lookingFor}\n`;
+      msg += `Religiosity: ${a.religiosity}/5\n`;
+      msg += `5-year vision: ${a.vision}\n`;
+      msg += `Why I'm a good match: ${a.eligible}\n`;
+      msg += `Why I'm attracted to you: ${a.attracted}\n`;
+      if(date || time) msg += `\nProposed time to meet: ${date || ''}${date && time ? ' at ' : ''}${time || ''}\n`;
+      if(note) msg += `Note: ${note}`;
+
+      window.open(`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+    });
+  } else {
+    c.innerHTML = `
+      <h2>Thank you for answering honestly.</h2>
+      <p>Based on what you shared, I don't think we're quite a match right now. I appreciate you taking the time, and I wish you well in your search.</p>
+    `;
+  }
+}
+
+let footerTapCount = 0;
+el('footerTap').addEventListener('click', () => {
+  footerTapCount++;
+  if(footerTapCount >= 5){ footerTapCount = 0; openAdmin(); }
+});
+if(new URLSearchParams(window.location.search).get('admin')){ openAdmin(); }
+
+function openAdmin(){
+  el('adminLogin').style.display = 'block';
+  el('ownerPhotoSection').style.display = 'none';
+  el('adminList').style.display = 'none';
+  el('adminError').style.display = 'none';
+  el('adminPass').value = '';
+  showScreen('screen-admin');
+}
+
+let ownerPhotoDraft = null;
+el('ownerPhotoInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  ownerPhotoDraft = await resizeImageFile(file, 300);
+  el('ownerPhotoPreview').src = ownerPhotoDraft;
+  el('ownerPhotoPreview').style.display = 'block';
+  el('ownerPhotoSaved').style.display = 'none';
+});
+
+el('saveOwnerPhotoBtn').addEventListener('click', async () => {
+  if(!ownerPhotoDraft) return;
+  try{
+    await window.storage.set('owner-photo', ownerPhotoDraft, true);
+    el('ownerPhotoSaved').style.display = 'block';
+  }catch(err){
+    console.error('Could not save photo', err);
+  }
+});
+
+el('adminLoginBtn').addEventListener('click', async () => {
+  if(el('adminPass').value !== CONFIG.adminPasscode){
+    el('adminError').textContent = 'Wrong passcode.';
+    el('adminError').style.display = 'block';
+    return;
+  }
+  el('adminLogin').style.display = 'none';
+  el('ownerPhotoSection').style.display = 'block';
+  try{
+    const r = await window.storage.get('owner-photo', true);
+    if(r && r.value){
+      el('ownerPhotoPreview').src = r.value;
+      el('ownerPhotoPreview').style.display = 'block';
+    }
+  }catch(e){ /* none saved yet */ }
+
+  el('adminList').style.display = 'block';
+  el('adminList').innerHTML = '<p style="color:var(--muted);">Loading…</p>';
+  try{
+    const listRes = await window.storage.list('submissions:', true);
+    const keys = listRes && listRes.keys ? listRes.keys : [];
+    if(keys.length === 0){
+      el('adminList').innerHTML = '<div class="admin-empty">No responses yet.</div>';
+      return;
+    }
+    const records = [];
+    for(const k of keys){
+      try{
+        const r = await window.storage.get(k, true);
+        if(r && r.value) records.push(JSON.parse(r.value));
+      }catch(e){}
+    }
+    records.sort((a,b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+    el('adminList').innerHTML = records.map(renderSubmission).join('');
+  }catch(err){
+    el('adminList').innerHTML = '<div class="admin-empty">Could not load responses.</div>';
+  }
+});
+
+function renderSubmission(r){
+  const when = new Date(r.submittedAt).toLocaleString();
+  const photo = r.photoThumb ? `<img src="${r.photoThumb}">` : '';
+  return `
+    <div class="submission">
+      <div class="row">
+        <span>${when}</span>
+        <span class="badge ${r.pass ? 'pass' : 'fail'}">${r.pass ? 'Match' : 'Not a match'} · age ${r.agePass ? '✓' : '✗'} · edu ${r.eduPass ? '✓' : '✗'} · faith ${r.religPass ? '✓' : '✗'}</span>
+      </div>
+      <dl>
+        <dt>Name</dt><dd>${escapeHtml(r.name)}</dd>
+        <dt>Age / Height</dt><dd>${r.age} · ${r.heightCm} cm</dd>
+        <dt>Lives in</dt><dd>${escapeHtml(r.city)}</dd>
+        <dt>Career</dt><dd>${escapeHtml(r.career)}</dd>
+        <dt>Education</dt><dd>${escapeHtml(r.educationLevel)} — ${escapeHtml(r.educationDetail)}</dd>
+        <dt>Family location</dt><dd>${escapeHtml(r.familyLocation)}</dd>
+        <dt>Household</dt><dd>${escapeHtml(r.household)}</dd>
+        <dt>Previously married</dt><dd>${escapeHtml(r.previouslyMarried)}</dd>
+        <dt>Marriage timeline</dt><dd>${escapeHtml(r.marriageTimeline)}</dd>
+        <dt>Who they want to marry</dt><dd>${escapeHtml(r.lookingFor)}</dd>
+        <dt>Religiosity (1–5)</dt><dd>${r.religiosity}</dd>
+        <dt>5-year vision</dt><dd>${escapeHtml(r.vision)}</dd>
+        <dt>Why they're eligible</dt><dd>${escapeHtml(r.eligible)}</dd>
+        <dt>Why attracted to you</dt><dd>${escapeHtml(r.attracted)}</dd>
+        ${photo ? `<dt>Photo</dt><dd>${photo}</dd>` : ''}
+      </dl>
+    </div>
+  `;
+}
+
+function escapeHtml(str){
+  if(str == null) return '';
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+el('adminCloseBtn').addEventListener('click', () => showScreen('screen-intro'));
+</script>
+</body>
+</html>
